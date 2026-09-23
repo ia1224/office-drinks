@@ -24,10 +24,15 @@ function App() {
         <Navbar />
         <main className="main-content">
           <Routes>
-            <Route path="/" element={<OrderPage />} />
+            {/* Direct URL paths for each page */}
             <Route path="/order" element={<OrderPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/qr" element={<QRPage />} />
+
+            {/* Root redirects to /order so the URL always explicitly shows /order */}
+            <Route path="/" element={<Navigate to="/order" replace />} />
+
+            {/* Any unknown URL redirects to /order */}
             <Route path="*" element={<Navigate to="/order" replace />} />
           </Routes>
         </main>

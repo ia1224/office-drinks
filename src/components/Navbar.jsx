@@ -3,9 +3,9 @@ import "./Navbar.css";
 
 function Navbar() {
   const location = useLocation();
-  const currentPath = location.pathname.toLowerCase();
+  const currentPath = location.pathname.toLowerCase().replace(/\/+$/, "") || "/";
 
-  const isOrderActive = currentPath === "/" || currentPath === "/order";
+  const isOrderActive = currentPath === "/order" || currentPath === "/";
   const isDashboardActive = currentPath === "/dashboard";
   const isQrActive = currentPath === "/qr";
 
