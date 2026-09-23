@@ -1,47 +1,40 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import OrderPage from "./pages/OrderPage";
 import DashboardPage from "./pages/DashboardPage";
 import QRPage from "./pages/QRPage";
 import "./App.css";
 
-function getInitialPage() {
-  const path = window.location.pathname.toLowerCase();
-  if (path.includes("dashboard")) return "dashboard";
-  if (path.includes("qr")) return "qr";
-  return "order";
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
+
+  return null;
 }
 
 function App() {
-  const [currentPage, setCurrentPage] = useState(getInitialPage);
-
-  useEffect(() => {
-    const handlePopState = () => {
-      setCurrentPage(getInitialPage());
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
-
-  const handleNavigate = (page, path) => {
-    if (window.location.pathname !== path) {
-      window.history.pushState(null, "", path);
-    }
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
   return (
-    <div className="main-layout">
-      <Navbar currentPage={currentPage} onNavigate={handleNavigate} />
-      <main className="main-content">
-        {currentPage === "order" && <OrderPage />}
-        {currentPage === "dashboard" && <DashboardPage />}
-        {currentPage === "qr" && <QRPage />}
-      </main>
-    </div>
+    <BrowserRouter>
+      <ScrollToTop />
+      <div className="main-layout">
+        <Navbar />
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<OrderPage />} />
+            <Route path="/order" element={<OrderPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/qr" element={<QRPage />} />
+            <Route path="*" element={<Navigate to="/order" replace />} />
+          </Routes>
+        </main>
+      </div>
+    </BrowserRouter>
   );
 }
 
 export default App;
+

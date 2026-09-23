@@ -1,24 +1,18 @@
+import { Link, useLocation } from "react-router-dom";
 import "./Navbar.css";
 
-function Navbar({ currentPage, onNavigate }) {
-  const handleNav = (page, path) => (e) => {
-    e.preventDefault();
-    if (onNavigate) {
-      onNavigate(page, path);
-    } else {
-      window.history.pushState(null, "", path);
-      window.location.pathname = path;
-    }
-  };
+function Navbar() {
+  const location = useLocation();
+  const currentPath = location.pathname.toLowerCase();
+
+  const isOrderActive = currentPath === "/" || currentPath === "/order";
+  const isDashboardActive = currentPath === "/dashboard";
+  const isQrActive = currentPath === "/qr";
 
   return (
     <nav className="office-navbar">
       <div className="navbar-container">
-        <a
-          href="/"
-          className="navbar-brand"
-          onClick={handleNav("order", "/")}
-        >
+        <Link to="/order" className="navbar-brand">
           <div className="brand-icon">
             <svg
               width="18"
@@ -41,30 +35,27 @@ function Navbar({ currentPage, onNavigate }) {
             <span className="brand-title">Office Barista</span>
             <span className="brand-subtitle">PANTRY ORDERS</span>
           </div>
-        </a>
+        </Link>
 
         <div className="navbar-links">
-          <a
-            href="/"
-            className={`nav-item ${currentPage === "order" ? "active" : ""}`}
-            onClick={handleNav("order", "/")}
+          <Link
+            to="/order"
+            className={`nav-item ${isOrderActive ? "active" : ""}`}
           >
             Order
-          </a>
-          <a
-            href="/dashboard"
-            className={`nav-item ${currentPage === "dashboard" ? "active" : ""}`}
-            onClick={handleNav("dashboard", "/dashboard")}
+          </Link>
+          <Link
+            to="/dashboard"
+            className={`nav-item ${isDashboardActive ? "active" : ""}`}
           >
             Dashboard
-          </a>
-          <a
-            href="/qr"
-            className={`nav-item ${currentPage === "qr" ? "active" : ""}`}
-            onClick={handleNav("qr", "/qr")}
+          </Link>
+          <Link
+            to="/qr"
+            className={`nav-item ${isQrActive ? "active" : ""}`}
           >
             QR
-          </a>
+          </Link>
         </div>
       </div>
     </nav>
@@ -72,3 +63,4 @@ function Navbar({ currentPage, onNavigate }) {
 }
 
 export default Navbar;
+
