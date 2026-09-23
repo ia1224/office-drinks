@@ -1,0 +1,471 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #fbfcfc;
+  color: #111827;
+  -webkit-font-smoothing: antialiased;
+}
+
+.main-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+}
+
+/* Order Page Layout */
+.order-page-wrapper {
+  min-height: calc(100vh - 65px);
+  background-color: #fbfcfc;
+  padding: 40px 20px 60px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.order-card-container {
+  width: 100%;
+  max-width: 520px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 24px;
+  padding: 36px 32px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05),
+    0 8px 10px -6px rgba(0, 0, 0, 0.02);
+}
+
+.order-header-section {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.order-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  padding: 5px 16px;
+  border-radius: 9999px;
+  margin-bottom: 12px;
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #059669;
+}
+
+.order-main-heading {
+  font-size: 28px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+}
+
+.order-sub-heading {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* Order Error Banner */
+.order-error-banner {
+  background-color: #fef2f2;
+  border: 1.5px solid #fecaca;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.order-error-banner strong {
+  display: block;
+  font-size: 13px;
+  color: #7f1d1d;
+  margin-bottom: 2px;
+}
+
+/* Form Styles */
+.order-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  letter-spacing: 0.3px;
+  margin-bottom: 8px;
+}
+
+.input-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-svg-icon {
+  position: absolute;
+  left: 14px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.form-text-input {
+  width: 100%;
+  padding: 13px 16px 13px 44px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 15px;
+  color: #111827;
+  background-color: #ffffff;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.form-text-input:focus {
+  border-color: #0b3b32;
+  box-shadow: 0 0 0 3px rgba(11, 59, 50, 0.1);
+}
+
+.form-text-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Drink Selection Grid */
+.drink-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.drink-select-card {
+  background-color: #ffffff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px 14px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.18s ease;
+}
+
+.drink-select-card:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.drink-select-card.selected-drink {
+  border-color: #0b3b32;
+  background-color: #f0fdf4;
+  box-shadow: 0 4px 14px rgba(11, 59, 50, 0.1);
+}
+
+.drink-select-icon {
+  font-size: 32px;
+  margin-bottom: 6px;
+}
+
+.drink-select-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.drink-select-desc {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.drink-check-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  background-color: #0b3b32;
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Customization Box */
+.customization-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.customization-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.customization-category {
+  margin-bottom: 16px;
+}
+
+.customization-category:last-child {
+  margin-bottom: 0;
+}
+
+.customization-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  letter-spacing: 0.3px;
+  margin-bottom: 8px;
+}
+
+.preference-pills-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pref-pill-btn {
+  width: auto;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  border: 1.5px solid #cbd5e1;
+  background-color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+}
+
+.pref-pill-btn:hover {
+  border-color: #94a3b8;
+  background-color: #f1f5f9;
+}
+
+.pref-pill-btn.pref-pill-selected {
+  background-color: #0b3b32;
+  border-color: #0b3b32;
+  color: #ffffff;
+}
+
+.pill-check {
+  font-size: 12px;
+}
+
+.custom-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #111827;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  background-color: #ffffff;
+  transition: border-color 0.2s ease;
+}
+
+.custom-textarea:focus {
+  border-color: #0b3b32;
+  box-shadow: 0 0 0 3px rgba(11, 59, 50, 0.1);
+}
+
+/* Submit Button */
+.order-submit-btn {
+  width: 100%;
+  background-color: #0b3b32;
+  color: #ffffff;
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 14px rgba(11, 59, 50, 0.22);
+  transition: all 0.2s ease;
+}
+
+.order-submit-btn:hover {
+  background-color: #0f4a3c;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(11, 59, 50, 0.3);
+}
+
+/* Success Card */
+.success-card-container {
+  text-align: center;
+}
+
+.success-icon-badge {
+  width: 68px;
+  height: 68px;
+  background-color: #ecfdf5;
+  border: 2px solid #a7f3d0;
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.success-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.success-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.order-receipt-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.receipt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 14px;
+}
+
+.receipt-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #94a3b8;
+}
+
+.receipt-time {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.receipt-drink-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.receipt-drink-icon {
+  font-size: 28px;
+}
+
+.receipt-drink-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.receipt-drink-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.receipt-drink-cust {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.receipt-note-item {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #475569;
+  font-style: italic;
+}
+
+.receipt-note-quote {
+  font-size: 12px;
+  opacity: 0.7;
+  font-style: normal;
+}
+
+/* Mobile responsive */
+@media (max-width: 540px) {
+  .order-card-container {
+    padding: 24px 20px;
+  }
+
+  .drink-selection-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .order-main-heading {
+    font-size: 24px;
+  }
+}

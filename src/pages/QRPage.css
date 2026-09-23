@@ -1,0 +1,299 @@
+.qr-page {
+  min-height: calc(100vh - 65px);
+  background-color: #fbfcfc;
+  padding: 40px 20px 60px;
+  display: flex;
+  justify-content: center;
+}
+
+.qr-content {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Badge */
+.qr-badge {
+  display: inline-block;
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  padding: 5px 16px;
+  border-radius: 9999px;
+  margin-bottom: 16px;
+}
+
+/* Heading & Subtitle */
+.qr-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
+}
+
+.qr-subtitle {
+  font-size: 15px;
+  color: #64748b;
+  max-width: 520px;
+  line-height: 1.6;
+  margin: 0 auto 36px;
+}
+
+/* QR Placard Card */
+.qr-card {
+  width: 100%;
+  max-width: 360px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05),
+    0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.qr-card:hover {
+  box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.08);
+}
+
+.qr-card-header {
+  background-color: #0b3b32;
+  border-radius: 12px;
+  padding: 12px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.qr-card-title {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.qr-card-tag {
+  color: #34d399;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+
+.qr-canvas-container {
+  padding: 16px 0 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.qr-canvas {
+  width: 280px !important;
+  height: 280px !important;
+  border-radius: 12px;
+}
+
+.qr-link-section {
+  padding-top: 10px;
+  padding-bottom: 4px;
+}
+
+.qr-link-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+
+.qr-link-url {
+  font-size: 12px;
+  color: #4b5563;
+  text-decoration: none;
+  word-break: break-all;
+  max-width: 300px;
+  display: inline-block;
+  line-height: 1.4;
+  transition: color 0.15s ease;
+}
+
+.qr-link-url:hover {
+  color: #0b3b32;
+  text-decoration: underline;
+}
+
+/* Action Buttons */
+.qr-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.qr-btn {
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.qr-btn-primary {
+  background-color: #0b3b32;
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(11, 59, 50, 0.18);
+}
+
+.qr-btn-primary:hover {
+  background-color: #0f4a3c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(11, 59, 50, 0.25);
+}
+
+.qr-btn-outline {
+  background-color: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.qr-btn-outline:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+  color: #111827;
+}
+
+/* How It Works Card */
+.qr-how-it-works {
+  width: 100%;
+  max-width: 480px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 22px 26px;
+  text-align: left;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.how-it-works-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #78716c;
+  margin-bottom: 14px;
+}
+
+.how-it-works-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.how-it-works-steps li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.step-num {
+  font-weight: 600;
+  color: #374151;
+  min-width: 14px;
+}
+
+.step-text {
+  color: #374151;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .qr-page {
+    padding: 24px 16px 40px;
+  }
+
+  .qr-title {
+    font-size: 24px;
+  }
+
+  .qr-subtitle {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .qr-actions {
+    flex-direction: column;
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .qr-btn {
+    width: 100%;
+  }
+
+  .qr-how-it-works {
+    padding: 18px 20px;
+  }
+}
+
+/* Print Stylesheet */
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+
+  .qr-page {
+    padding: 0;
+    min-height: auto;
+    background: transparent !important;
+  }
+
+  .qr-badge,
+  .qr-title,
+  .qr-subtitle,
+  .qr-actions,
+  .qr-how-it-works {
+    display: none !important;
+  }
+
+  .qr-card {
+    border: 2px solid #0b3b32 !important;
+    box-shadow: none !important;
+    margin: 40px auto !important;
+    max-width: 450px !important;
+    padding: 30px !important;
+    page-break-inside: avoid;
+  }
+
+  .qr-card-header {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background-color: #0b3b32 !important;
+  }
+
+  .qr-canvas {
+    width: 340px !important;
+    height: 340px !important;
+  }
+}
