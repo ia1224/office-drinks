@@ -1,16 +1,22 @@
 import { useState } from "react";
+import { useAuth } from "../context/useAuth";
 import { insertOrder } from "../lib/supabase";
 
 function OrderPage() {
-  const [name, setName] = useState("");
+  const { employeeName, updateEmployeeName } = useAuth();
+
+  const [name, setName] = useState(employeeName || "");
+  const [isEditingName, setIsEditingName] = useState(false);
   const [drink, setDrink] = useState("");
   const [sugarPreference, setSugarPreference] = useState("");
   const [strengthPreference, setStrengthPreference] = useState("");
+  const [milkPreference, setMilkPreference] = useState("");
   const [waterTemperature, setWaterTemperature] = useState("");
   const [customComment, setCustomComment] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSubmittedOrder, setLastSubmittedOrder] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const drinks = [
     { name: "Tea", icon: "🍵", description: "Freshly brewed hot tea" },
@@ -22,13 +28,13 @@ function OrderPage() {
   const sugarOptions = ["Less Sugar", "No Sugar"];
   const strengthOptions = ["Strong", "Light"];
 
-  const [errorMessage, setErrorMessage] = useState("");
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!name.trim()) {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
       alert("Please enter your name");
+      setIsEditingName(true);
       return;
     }
 
@@ -37,16 +43,28 @@ function OrderPage() {
       return;
     }
 
+    // Persist employee name in AuthContext & LocalStorage for all future orders
+    updateEmployeeName(trimmedName);
+
     setIsSubmitting(true);
     setErrorMessage("");
 
+    // Format strength and milk preferences
+    let formattedStrength = strengthPreference;
+    if (drink === "Coffee") {
+      const parts = [strengthPreference, milkPreference].filter(Boolean);
+      formattedStrength = parts.join(" · ");
+    } else if (drink === "Water") {
+      formattedStrength = waterTemperature;
+    }
+
     const newOrder = {
       id: Date.now(),
-      name: name.trim(),
+      name: trimmedName,
       drink: drink,
       sugarPreference: drink === "Water" ? "" : sugarPreference,
-      strengthPreference:
-        drink === "Water" ? waterTemperature : strengthPreference,
+      strengthPreference: formattedStrength,
+      milkPreference: drink === "Coffee" ? milkPreference : "",
       customComment: customComment.trim(),
       createdAt: Date.now(),
       time: new Date().toLocaleTimeString([], {
@@ -73,11 +91,15 @@ function OrderPage() {
     }
   };
 
+  // Place another order: keep employee name, reset drink choices
   const handleNewOrder = () => {
-    setName("");
+    // Keep name preserved as requested!
+    setName(employeeName || name);
+    setIsEditingName(false);
     setDrink("");
     setSugarPreference("");
     setStrengthPreference("");
+    setMilkPreference("");
     setWaterTemperature("");
     setCustomComment("");
     setLastSubmittedOrder(null);
@@ -132,7 +154,11 @@ function OrderPage() {
                 <span className="receipt-drink-cust">
                   {lastSubmittedOrder.drink === "Water"
                     ? lastSubmittedOrder.strengthPreference
-                      ? `${lastSubmittedOrder.strengthPreference === "Hot" ? "🔥 Hot" : "❄️ Cold"}`
+                      ? `${
+                          lastSubmittedOrder.strengthPreference === "Hot"
+                            ? "🔥 Hot"
+                            : "❄️ Cold"
+                        }`
                       : "Standard"
                     : [
                         lastSubmittedOrder.sugarPreference,
@@ -159,7 +185,7 @@ function OrderPage() {
             className="order-submit-btn"
             onClick={handleNewOrder}
           >
-            Place Another Order
+            Place Another Order as {lastSubmittedOrder.name}
           </button>
         </div>
       </div>
@@ -192,36 +218,78 @@ function OrderPage() {
         )}
 
         <form onSubmit={handleSubmit} className="order-form">
-          {/* Employee Name */}
-          <div className="form-group">
-            <label htmlFor="employee-name" className="form-label">
-              Your Name
-            </label>
-            <div className="input-icon-wrapper">
-              <svg
-                className="input-svg-icon"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-              <input
-                id="employee-name"
-                type="text"
-                placeholder="e.g. Aniket, Sarah, Rahul"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="form-text-input"
-                autoComplete="name"
-              />
+          {/* Employee Name / Identity Section */}
+          <div className="form-group employee-identity-card">
+            <div className="employee-identity-header">
+              <label htmlFor="employee-name" className="form-label" style={{ marginBottom: 0 }}>
+                Ordering For
+              </label>
+              {name && !isEditingName ? (
+                <button
+                  type="button"
+                  className="employee-change-btn"
+                  onClick={() => setIsEditingName(true)}
+                >
+                  Change Name
+                </button>
+              ) : name && isEditingName ? (
+                <button
+                  type="button"
+                  className="employee-change-btn"
+                  onClick={() => setIsEditingName(false)}
+                >
+                  Keep "{name}"
+                </button>
+              ) : null}
             </div>
+
+            {name && !isEditingName ? (
+              <div
+                className="employee-remembered-box"
+                onClick={() => setIsEditingName(true)}
+                title="Click to edit name"
+                role="button"
+                tabIndex={0}
+              >
+                <div className="employee-remembered-avatar">
+                  {name.charAt(0).toUpperCase()}
+                </div>
+                <div className="employee-remembered-details">
+                  <span className="employee-remembered-name">{name}</span>
+                  <span className="employee-remembered-badge">
+                    ✓ Remembered on this device
+                  </span>
+                </div>
+                <span className="employee-edit-hint">Edit ✏️</span>
+              </div>
+            ) : (
+              <div className="input-icon-wrapper">
+                <svg
+                  className="input-svg-icon"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <input
+                  id="employee-name"
+                  type="text"
+                  placeholder="e.g. Sarah, Aniket, Rahul"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="form-text-input"
+                  autoComplete="name"
+                  autoFocus={!name}
+                />
+              </div>
+            )}
           </div>
 
           {/* Drink Selection */}
@@ -233,7 +301,9 @@ function OrderPage() {
                 return (
                   <div
                     key={item.name}
-                    className={`drink-select-card ${isSelected ? "selected-drink" : ""}`}
+                    className={`drink-select-card ${
+                      isSelected ? "selected-drink" : ""
+                    }`}
                     onClick={() => setDrink(item.name)}
                     role="button"
                     tabIndex={0}
@@ -325,6 +395,31 @@ function OrderPage() {
                 </div>
               </div>
 
+              {/* Milk Preference (Coffee Only) */}
+              {drink === "Coffee" && (
+                <div className="customization-category">
+                  <label className="customization-label">Milk Preference</label>
+                  <div className="preference-pills-row">
+                    <button
+                      type="button"
+                      className={`pref-pill-btn ${
+                        milkPreference === "No Milk" ? "pref-pill-selected" : ""
+                      }`}
+                      onClick={() =>
+                        setMilkPreference(
+                          milkPreference === "No Milk" ? "" : "No Milk",
+                        )
+                      }
+                    >
+                      {milkPreference === "No Milk" && (
+                        <span className="pill-check">✓</span>
+                      )}
+                      🥛 No Milk (Black Coffee)
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Custom Comment Note */}
               <div className="customization-category">
                 <label htmlFor="custom-notes" className="customization-label">
@@ -350,7 +445,9 @@ function OrderPage() {
               </h3>
 
               <div className="customization-category">
-                <label className="customization-label">Temperature Preference</label>
+                <label className="customization-label">
+                  Temperature Preference
+                </label>
                 <div className="preference-pills-row">
                   {["Hot", "Cold"].map((temp) => {
                     const isSelected = waterTemperature === temp;
@@ -396,7 +493,13 @@ function OrderPage() {
             className="order-submit-btn"
             disabled={isSubmitting}
           >
-            <span>{isSubmitting ? "Submitting..." : "Submit Order"}</span>
+            <span>
+              {isSubmitting
+                ? "Submitting..."
+                : name
+                ? `Submit Order for ${name}`
+                : "Submit Order"}
+            </span>
             <svg
               width="18"
               height="18"

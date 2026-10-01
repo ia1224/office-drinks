@@ -195,28 +195,6 @@
   font-size: 15px;
 }
 
-/* Sound Button */
-.sound-toggle-btn {
-  background-color: #ffffff;
-  border: 1px solid #d1d5db;
-  color: #4b5563;
-}
-
-.sound-toggle-btn:hover {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
-}
-
-.sound-toggle-btn.sound-active {
-  background-color: #e6fbf5;
-  border-color: #5eead4;
-  color: #0f766e;
-}
-
-.sound-toggle-btn.sound-active:hover {
-  background-color: #ccfbf1;
-}
-
 /* Outline Buttons (Refresh, Export) */
 .outline-btn {
   background-color: #ffffff;

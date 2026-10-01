@@ -9,10 +9,34 @@ import {
 } from "../lib/supabase";
 import "./DashboardPage.css";
 
+function showSystemNotification(order) {
+  if (
+    !("Notification" in window) ||
+    Notification.permission !== "granted" ||
+    !("serviceWorker" in navigator)
+  ) {
+    return;
+  }
+
+  navigator.serviceWorker.ready
+    .then((registration) =>
+      registration.showNotification("New drink order", {
+        body: `${order.name} ordered ${order.drink}.`,
+        icon: "/pwa-icon.svg",
+        badge: "/pwa-icon.svg",
+        tag: `drink-order-${order.id}`,
+        silent: false,
+        data: { url: "/dashboard" },
+      }),
+    )
+    .catch((error) => {
+      console.error("System notification could not be shown:", error);
+    });
+}
+
 function DashboardPage() {
   const [orders, setOrders] = useState([]);
   const [newOrderIds, setNewOrderIds] = useState([]);
-  const [soundEnabled, setSoundEnabled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDrink, setFilterDrink] = useState("All");
   const [viewTab, setViewTab] = useState("active");
@@ -23,12 +47,24 @@ function DashboardPage() {
 
   const knownOrderIds = useRef(new Set());
   const notificationTimer = useRef(null);
-  const notificationAudio = useRef(null);
-  const soundEnabledRef = useRef(soundEnabled);
 
   useEffect(() => {
-    soundEnabledRef.current = soundEnabled;
-  }, [soundEnabled]);
+    if (!("Notification" in window) || Notification.permission !== "default") {
+      return undefined;
+    }
+
+    const requestPermission = () => {
+      if (Notification.permission === "default") {
+        Notification.requestPermission().catch((error) => {
+          console.error("Notification permission could not be requested:", error);
+        });
+      }
+    };
+
+    requestPermission();
+    window.addEventListener("pointerdown", requestPermission, { once: true });
+    return () => window.removeEventListener("pointerdown", requestPermission);
+  }, []);
 
   // Format live date/time: e.g. "Sep 21, 02:17 PM · Monday"
   useEffect(() => {
@@ -50,62 +86,6 @@ function DashboardPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Play notification sound
-  const playPing = () => {
-    if (!soundEnabledRef.current) {
-      return;
-    }
-
-    try {
-      if (!notificationAudio.current) {
-        notificationAudio.current = new Audio("/notification.mp3");
-      }
-
-      notificationAudio.current.currentTime = 0;
-      notificationAudio.current.play().catch((error) => {
-        console.log("Notification sound could not play:", error);
-      });
-    } catch (error) {
-      console.log("Notification sound error:", error);
-    }
-  };
-
-  // Toggle sound button
-  const toggleSound = () => {
-    if (soundEnabled) {
-      setSoundEnabled(false);
-      soundEnabledRef.current = false;
-
-      if (notificationAudio.current) {
-        try {
-          notificationAudio.current.pause();
-          notificationAudio.current.currentTime = 0;
-        } catch (error) {
-          console.log("Error stopping audio:", error);
-        }
-      }
-      console.log("Sound disabled");
-    } else {
-      setSoundEnabled(true);
-      soundEnabledRef.current = true;
-
-      try {
-        if (!notificationAudio.current) {
-          notificationAudio.current = new Audio("/notification.mp3");
-        }
-
-        notificationAudio.current.currentTime = 0;
-        notificationAudio.current.play().catch((error) => {
-          console.log("Test sound could not play:", error);
-        });
-
-        console.log("Sound enabled");
-      } catch (error) {
-        console.log("Sound setup error:", error);
-      }
-    }
-  };
-
   // Load and monitor orders from Supabase
   const loadOrders = useCallback(async () => {
     try {
@@ -122,7 +102,7 @@ function DashboardPage() {
         console.log("NEW ORDER DETECTED:", newlyAddedOrders);
 
         setNewOrderIds((prev) => [...new Set([...prev, ...newIds])]);
-        playPing();
+        newlyAddedOrders.forEach(showSystemNotification);
 
         clearTimeout(notificationTimer.current);
         notificationTimer.current = setTimeout(() => {
@@ -172,7 +152,7 @@ function DashboardPage() {
         if (!knownOrderIds.current.has(newOrder.id)) {
           knownOrderIds.current.add(newOrder.id);
           setNewOrderIds((prev) => [...new Set([...prev, newOrder.id])]);
-          playPing();
+          showSystemNotification(newOrder);
 
           clearTimeout(notificationTimer.current);
           notificationTimer.current = setTimeout(() => {
@@ -427,21 +407,6 @@ function DashboardPage() {
           </div>
 
           <div className="dashboard-toolbar">
-            {/* Sound Toggle Button */}
-            <button
-              type="button"
-              className={`toolbar-btn sound-toggle-btn ${
-                soundEnabled ? "sound-active" : ""
-              }`}
-              onClick={toggleSound}
-              title={soundEnabled ? "Mute audio" : "Enable sound alerts"}
-            >
-              <span className="toolbar-btn-icon">
-                {soundEnabled ? "🔊" : "🔈"}
-              </span>
-              <span>{soundEnabled ? "Sound on" : "Sound off"}</span>
-            </button>
-
             {/* Refresh Button */}
             <button
               type="button"
@@ -820,11 +785,31 @@ function DashboardPage() {
                     </div>
 
                     {/* Drink Badge Pill */}
-                    <div className="card-drink-pill">
-                      <span className="drink-pill-emoji">
-                        {getDrinkIcon(order.drink)}
-                      </span>
-                      <span className="drink-pill-name">{order.drink}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                      <div className="card-drink-pill">
+                        <span className="drink-pill-emoji">
+                          {getDrinkIcon(order.drink)}
+                        </span>
+                        <span className="drink-pill-name">{order.drink}</span>
+                      </div>
+                      {order.drink === "Coffee" &&
+                        order.strengthPreference?.includes("No Milk") && (
+                          <span
+                            className="coffee-no-milk-badge"
+                            style={{
+                              fontSize: "11px",
+                              fontWeight: "700",
+                              color: "#92400e",
+                              backgroundColor: "#fef3c7",
+                              padding: "4px 8px",
+                              borderRadius: "9999px",
+                              border: "1px solid #fde68a",
+                              letterSpacing: "0.2px",
+                            }}
+                          >
+                            🥛 No Milk
+                          </span>
+                        )}
                     </div>
 
                     {/* Notes / Preferences Box */}
