@@ -17,12 +17,18 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("push", (event) => {
   const payload = readPushPayload(event);
+  const title = payload.title || "Office Barista";
+  const body = payload.body || "A new drink order has arrived.";
+  const orderId = payload.orderId;
+
   event.waitUntil(
-    self.registration.showNotification(payload.title || "Office Barista", {
-      body: payload.body || "A new drink order has arrived.",
+    self.registration.showNotification(title, {
+      body,
       icon: "/pwa-icon.svg",
       badge: "/pwa-icon.svg",
-      tag: payload.orderId ? `drink-order-${payload.orderId}` : "drink-order",
+      tag: orderId ? `drink-order-${orderId}` : `drink-order-${Date.now()}`,
+      renotify: true,
+      vibrate: [200, 100, 200],
       data: { url: payload.url || "/dashboard" },
     }),
   );

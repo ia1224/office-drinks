@@ -11,6 +11,8 @@ import {
   enableOrderPushNotifications,
   hasOrderPushSubscription,
   isOrderPushSupported,
+  sendLocalTestNotification,
+  getVapidPublicKey,
 } from "../lib/pushNotifications";
 import "./DashboardPage.css";
 
@@ -24,14 +26,14 @@ function showSystemNotification(order) {
   }
 
   navigator.serviceWorker.ready
-    .then(async (registration) => {
-      if (await registration.pushManager.getSubscription()) return;
-
+    .then((registration) => {
       return registration.showNotification("New drink order", {
         body: `${order.name} ordered ${order.drink}.`,
         icon: "/pwa-icon.svg",
         badge: "/pwa-icon.svg",
         tag: `drink-order-${order.id}`,
+        renotify: true,
+        vibrate: [200, 100, 200],
         silent: false,
         data: { url: "/dashboard" },
       });
@@ -211,6 +213,14 @@ function DashboardPage() {
       setPushError(error.message || "Could not enable push notifications.");
     } finally {
       setIsEnablingPush(false);
+    }
+  };
+
+  const handleTestAlert = async () => {
+    try {
+      await sendLocalTestNotification();
+    } catch (error) {
+      alert(error.message || "Could not trigger test notification.");
     }
   };
 
@@ -431,10 +441,10 @@ function DashboardPage() {
               type="button"
               className="toolbar-btn outline-btn"
               onClick={handleEnablePush}
-              disabled={pushEnabled || isEnablingPush || !isOrderPushSupported()}
+              disabled={isEnablingPush || !isOrderPushSupported()}
               title={
                 pushEnabled
-                  ? "Push alerts are enabled on this device"
+                  ? "Push alerts are enabled on this device (click to re-sync)"
                   : "Enable order alerts on this device"
               }
             >
@@ -454,7 +464,7 @@ function DashboardPage() {
               </svg>
               <span>
                 {pushEnabled
-                  ? "Alerts On"
+                  ? "Alerts On ✓"
                   : isEnablingPush
                     ? "Enabling..."
                     : isOrderPushSupported()
@@ -462,6 +472,17 @@ function DashboardPage() {
                       : "Push Unavailable"}
               </span>
             </button>
+
+            {pushEnabled && (
+              <button
+                type="button"
+                className="toolbar-btn outline-btn"
+                onClick={handleTestAlert}
+                title="Send a test notification to verify your device alerts"
+              >
+                <span>🔔 Test Alert</span>
+              </button>
+            )}
 
             {/* Refresh Button */}
             <button
@@ -515,7 +536,28 @@ function DashboardPage() {
 
         {pushError && (
           <div className="push-error-banner" role="alert">
-            {pushError}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "10px" }}>
+              <div>
+                <strong>⚠️ Push Notification Notice:</strong>
+                <div>{pushError}</div>
+              </div>
+              <button
+                type="button"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  color: "#991b1b",
+                  fontWeight: "bold",
+                  padding: "0 4px",
+                }}
+                onClick={() => setPushError("")}
+                title="Dismiss"
+              >
+                ✕
+              </button>
+            </div>
           </div>
         )}
 

@@ -20,7 +20,7 @@ If you are developing a production application, we recommend using TypeScript wi
 Browser-generated notifications only work while the dashboard page is running. Background notifications use Web Push through a Supabase Edge Function and require one-time project setup:
 
 1. Run `supabase_schema.sql` in the Supabase SQL Editor. This creates the private subscription table and the RPC used by the app.
-2. Generate a VAPID key pair with `npx web-push generate-vapid-keys --json`. Keep the private key secret. Add the public key as `VITE_VAPID_PUBLIC_KEY` in your local `.env` and frontend hosting environment, then rebuild and redeploy the app.
+2. Generate a VAPID key pair by running `npm run generate-vapid`. Keep the private key secret. Add the generated public key as `VITE_VAPID_PUBLIC_KEY` in your `.env` (or run `node scripts/generate-vapid.js --write`), then restart your Vite server.
 3. Install the Supabase CLI, then deploy the function and configure its secrets:
 
 	```sh

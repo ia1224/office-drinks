@@ -56,6 +56,10 @@ Deno.serve(async (request) => {
             url: "/dashboard",
             orderId: order.id,
           }),
+          {
+            TTL: 3600,
+            urgency: "high",
+          },
         );
       } catch (pushError) {
         const statusCode = (pushError as { statusCode?: number }).statusCode;
