@@ -7,16 +7,30 @@ self.addEventListener("notificationclick", (event) => {
   ).href;
 
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(
-      (clients) => {
-        const appWindow = clients.find((client) => "focus" in client);
-        if (appWindow) {
-          return appWindow
-            .navigate(targetUrl)
-            .then(() => appWindow.focus());
+    (async () => {
+      const appWindows = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      const appWindow =
+        appWindows.find((client) => client.url === targetUrl) || appWindows[0];
+
+      if (appWindow) {
+        try {
+          const targetWindow =
+            appWindow.url === targetUrl
+              ? appWindow
+              : await appWindow.navigate(targetUrl);
+          if (targetWindow) {
+            await targetWindow.focus();
+            return;
+          }
+        } catch (error) {
+          console.warn("Could not focus the app window from notification:", error);
         }
-        return self.clients.openWindow(targetUrl);
-      },
-    ),
+      }
+
+      await self.clients.openWindow(targetUrl);
+    })(),
   );
 });
