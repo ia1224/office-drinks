@@ -176,6 +176,46 @@
   color: #ffffff;
 }
 
+@media (max-width: 760px) {
+  .navbar-container {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 16px;
+  }
+
+  .navbar-links {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 6px;
+    padding-top: 8px;
+    border-top: 1px solid #f0f2f5;
+  }
+
+  .nav-item {
+    padding: 7px 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .navbar-container {
+    padding-inline: 12px;
+  }
+
+  .navbar-links {
+    gap: 4px;
+  }
+
+  .employee-nav-name {
+    max-width: 90px;
+  }
+
+  .nav-logout-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
 @media print {
   .office-navbar {
     display: none !important;

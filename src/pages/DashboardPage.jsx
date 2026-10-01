@@ -7,6 +7,11 @@ import {
   subscribeToOrders,
   isSupabaseConfigured,
 } from "../lib/supabase";
+import {
+  enableOrderPushNotifications,
+  hasOrderPushSubscription,
+  isOrderPushSupported,
+} from "../lib/pushNotifications";
 import "./DashboardPage.css";
 
 function showSystemNotification(order) {
@@ -19,16 +24,18 @@ function showSystemNotification(order) {
   }
 
   navigator.serviceWorker.ready
-    .then((registration) =>
-      registration.showNotification("New drink order", {
+    .then(async (registration) => {
+      if (await registration.pushManager.getSubscription()) return;
+
+      return registration.showNotification("New drink order", {
         body: `${order.name} ordered ${order.drink}.`,
         icon: "/pwa-icon.svg",
         badge: "/pwa-icon.svg",
         tag: `drink-order-${order.id}`,
         silent: false,
         data: { url: "/dashboard" },
-      }),
-    )
+      });
+    })
     .catch((error) => {
       console.error("System notification could not be shown:", error);
     });
@@ -44,26 +51,26 @@ function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentDateTime, setCurrentDateTime] = useState("");
   const [supabaseError, setSupabaseError] = useState("");
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushError, setPushError] = useState("");
+  const [isEnablingPush, setIsEnablingPush] = useState(false);
 
   const knownOrderIds = useRef(new Set());
   const notificationTimer = useRef(null);
 
   useEffect(() => {
-    if (!("Notification" in window) || Notification.permission !== "default") {
-      return undefined;
-    }
+    let isMounted = true;
+    hasOrderPushSubscription()
+      .then((enabled) => {
+        if (isMounted) setPushEnabled(enabled);
+      })
+      .catch((error) => {
+        console.error("Could not check push subscription:", error);
+      });
 
-    const requestPermission = () => {
-      if (Notification.permission === "default") {
-        Notification.requestPermission().catch((error) => {
-          console.error("Notification permission could not be requested:", error);
-        });
-      }
+    return () => {
+      isMounted = false;
     };
-
-    requestPermission();
-    window.addEventListener("pointerdown", requestPermission, { once: true });
-    return () => window.removeEventListener("pointerdown", requestPermission);
   }, []);
 
   // Format live date/time: e.g. "Sep 21, 02:17 PM · Monday"
@@ -192,6 +199,19 @@ function DashboardPage() {
     setIsRefreshing(true);
     await loadOrders();
     setTimeout(() => setIsRefreshing(false), 500);
+  };
+
+  const handleEnablePush = async () => {
+    setPushError("");
+    setIsEnablingPush(true);
+    try {
+      await enableOrderPushNotifications();
+      setPushEnabled(true);
+    } catch (error) {
+      setPushError(error.message || "Could not enable push notifications.");
+    } finally {
+      setIsEnablingPush(false);
+    }
   };
 
   // Clear all orders
@@ -407,6 +427,42 @@ function DashboardPage() {
           </div>
 
           <div className="dashboard-toolbar">
+            <button
+              type="button"
+              className="toolbar-btn outline-btn"
+              onClick={handleEnablePush}
+              disabled={pushEnabled || isEnablingPush || !isOrderPushSupported()}
+              title={
+                pushEnabled
+                  ? "Push alerts are enabled on this device"
+                  : "Enable order alerts on this device"
+              }
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                <path d="M10 21h4" />
+              </svg>
+              <span>
+                {pushEnabled
+                  ? "Alerts On"
+                  : isEnablingPush
+                    ? "Enabling..."
+                    : isOrderPushSupported()
+                      ? "Enable Alerts"
+                      : "Push Unavailable"}
+              </span>
+            </button>
+
             {/* Refresh Button */}
             <button
               type="button"
@@ -456,6 +512,12 @@ function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {pushError && (
+          <div className="push-error-banner" role="alert">
+            {pushError}
+          </div>
+        )}
 
         {/* 5 Summary Cards Grid matching Screenshot */}
         <div className="metrics-grid">

@@ -19,6 +19,7 @@ body {
 
 .main-content {
   flex: 1;
+  min-width: 0;
 }
 
 /* Order Page Layout */
@@ -546,8 +547,14 @@ body {
 
 /* Mobile responsive */
 @media (max-width: 540px) {
+  .order-page-wrapper {
+    min-height: calc(100svh - 65px);
+    padding: 24px 14px 40px;
+  }
+
   .order-card-container {
-    padding: 24px 20px;
+    padding: 22px 16px;
+    border-radius: 18px;
   }
 
   .drink-selection-grid {

@@ -1,3 +1,33 @@
+function readPushPayload(event) {
+  if (!event.data) return {};
+  try {
+    return event.data.json();
+  } catch {
+    return { body: event.data.text() };
+  }
+}
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener("push", (event) => {
+  const payload = readPushPayload(event);
+  event.waitUntil(
+    self.registration.showNotification(payload.title || "Office Barista", {
+      body: payload.body || "A new drink order has arrived.",
+      icon: "/pwa-icon.svg",
+      badge: "/pwa-icon.svg",
+      tag: payload.orderId ? `drink-order-${payload.orderId}` : "drink-order",
+      data: { url: payload.url || "/dashboard" },
+    }),
+  );
+});
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
@@ -8,15 +38,15 @@ self.addEventListener("notificationclick", (event) => {
 
   event.waitUntil(
     (async () => {
-      const appWindows = await self.clients.matchAll({
-        type: "window",
-        includeUncontrolled: true,
-      });
-      const appWindow =
-        appWindows.find((client) => client.url === targetUrl) || appWindows[0];
+      try {
+        const appWindows = await self.clients.matchAll({
+          type: "window",
+          includeUncontrolled: true,
+        });
+        const appWindow =
+          appWindows.find((client) => client.url === targetUrl) || appWindows[0];
 
-      if (appWindow) {
-        try {
+        if (appWindow) {
           const targetWindow =
             appWindow.url === targetUrl
               ? appWindow
@@ -25,9 +55,9 @@ self.addEventListener("notificationclick", (event) => {
             await targetWindow.focus();
             return;
           }
-        } catch (error) {
-          console.warn("Could not focus the app window from notification:", error);
         }
+      } catch (error) {
+        console.warn("Could not focus the app window from notification:", error);
       }
 
       await self.clients.openWindow(targetUrl);

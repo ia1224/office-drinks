@@ -310,3 +310,20 @@
   color: #0b3b32;
   font-weight: 600;
 }
+
+@media (max-width: 480px) {
+  .login-page-wrapper {
+    min-height: calc(100svh - 65px);
+    padding: 24px 14px 40px;
+  }
+
+  .login-card {
+    padding: 24px 20px;
+    border-radius: 18px;
+  }
+
+  .login-tab-btn {
+    gap: 5px;
+    padding-inline: 8px;
+  }
+}

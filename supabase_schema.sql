@@ -54,3 +54,37 @@ BEGIN
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
+
+-- 5. Store browser push subscriptions for background order notifications
+CREATE TABLE IF NOT EXISTS public.push_subscriptions (
+  endpoint TEXT PRIMARY KEY,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.push_subscriptions FROM PUBLIC, anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.register_order_push_subscription(
+  subscription_endpoint TEXT,
+  subscription_p256dh TEXT,
+  subscription_auth TEXT
+)
+RETURNS VOID
+LANGUAGE SQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  INSERT INTO public.push_subscriptions (endpoint, p256dh, auth)
+  VALUES (subscription_endpoint, subscription_p256dh, subscription_auth)
+  ON CONFLICT (endpoint) DO UPDATE
+  SET p256dh = EXCLUDED.p256dh,
+      auth = EXCLUDED.auth,
+      created_at = NOW();
+$$;
+
+REVOKE ALL ON FUNCTION public.register_order_push_subscription(TEXT, TEXT, TEXT)
+FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.register_order_push_subscription(TEXT, TEXT, TEXT)
+TO anon, authenticated;
