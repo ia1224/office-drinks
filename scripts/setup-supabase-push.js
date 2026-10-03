@@ -66,9 +66,21 @@ async function getSetupInput() {
 }
 
 async function main() {
-  const { projectRef, publishableKey, vapidSubject } = await getSetupInput();
   const skipLogin = process.argv.includes("--skip-login");
   const webhookSecretFile = readOption("webhook-secret-file");
+
+  if (!skipLogin) {
+    console.log("Opening Supabase CLI login. Sign in with an Administrator or Owner account.\n");
+    runSupabase(["login"]);
+  }
+
+  if (!readOption("project-ref")) {
+    console.log("Your available Supabase projects:\n");
+    runSupabase(["projects", "list"]);
+    console.log("");
+  }
+
+  const { projectRef, publishableKey, vapidSubject } = await getSetupInput();
   const credentials = generatePushCredentials();
   const projectUrl = `https://${projectRef}.supabase.co`;
 
@@ -79,10 +91,6 @@ async function main() {
   });
 
   console.log("\nLocal browser configuration saved to .env.local.");
-  if (!skipLogin) {
-    console.log("Opening Supabase CLI login. Sign in with an Administrator or Owner account.\n");
-    runSupabase(["login"]);
-  }
   runSupabase([
     "secrets",
     "set",

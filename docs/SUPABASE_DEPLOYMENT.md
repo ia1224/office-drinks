@@ -35,7 +35,7 @@ npm run setup-supabase-push -- \
   --vapid-subject mailto:ops@example.com
 ```
 
-The command signs into Supabase CLI, creates a fresh VAPID P-256 key pair and webhook secret, writes the browser-safe values to `.env.local`, saves the private values as Supabase Function secrets, and deploys `send-order-push`.
+The command signs into Supabase CLI. If `--project-ref` is omitted, it lists the projects available to that account before prompting for the project ref. It then creates a fresh VAPID P-256 key pair and webhook secret, writes the browser-safe values to `.env.local`, saves the private values as Supabase Function secrets, and deploys `send-order-push`.
 
 For an already authenticated CLI, keep the webhook secret in an ignored file instead of printing it:
 
