@@ -101,16 +101,26 @@ export async function enableOrderPushNotifications() {
     } catch {
       try {
         await subscription.unsubscribe();
-      } catch {}
+      } catch (unsubscribeError) {
+        console.warn("Could not remove the old push subscription:", unsubscribeError);
+      }
       subscription = null;
     }
   }
 
   if (!subscription) {
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey,
-    });
+    try {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey,
+      });
+    } catch (error) {
+      const detail = error?.message || "Unknown browser push service error.";
+      throw new Error(
+        `Push registration failed: ${detail} Check that this browser can reach its push service, then clear this site's data and retry.`,
+        { cause: error },
+      );
+    }
   }
 
   const keys = subscription.toJSON().keys;
@@ -131,6 +141,26 @@ export async function enableOrderPushNotifications() {
   }
 
   return subscription;
+}
+
+export async function disableOrderPushNotifications() {
+  if (!isOrderPushSupported()) return;
+
+  const registration = await navigator.serviceWorker.ready;
+  const subscription = await registration.pushManager.getSubscription();
+  if (!subscription) return;
+
+  const endpoint = subscription.endpoint;
+  await subscription.unsubscribe();
+
+  if (isSupabaseConfigured() && supabase) {
+    const { error } = await supabase.rpc("unregister_order_push_subscription", {
+      subscription_endpoint: endpoint,
+    });
+    if (error) {
+      console.warn("Could not remove the push subscription from Supabase:", error);
+    }
+  }
 }
 
 export async function sendLocalTestNotification() {

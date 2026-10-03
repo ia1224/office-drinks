@@ -8,11 +8,9 @@ import {
   isSupabaseConfigured,
 } from "../lib/supabase";
 import {
+  disableOrderPushNotifications,
   enableOrderPushNotifications,
-  hasOrderPushSubscription,
   isOrderPushSupported,
-  sendLocalTestNotification,
-  getVapidPublicKey,
 } from "../lib/pushNotifications";
 import "./DashboardPage.css";
 
@@ -59,21 +57,32 @@ function DashboardPage() {
 
   const knownOrderIds = useRef(new Set());
   const notificationTimer = useRef(null);
+  const automaticPushSetupStarted = useRef(false);
+
+  const startPushSetup = useCallback(async () => {
+    if (!isOrderPushSupported()) {
+      setPushError("Push notifications are not supported by this browser.");
+      return;
+    }
+
+    setPushError("");
+    setIsEnablingPush(true);
+    try {
+      await enableOrderPushNotifications();
+      setPushEnabled(true);
+    } catch (error) {
+      setPushEnabled(false);
+      setPushError(error.message || "Could not enable push notifications.");
+    } finally {
+      setIsEnablingPush(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let isMounted = true;
-    hasOrderPushSubscription()
-      .then((enabled) => {
-        if (isMounted) setPushEnabled(enabled);
-      })
-      .catch((error) => {
-        console.error("Could not check push subscription:", error);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    if (automaticPushSetupStarted.current) return;
+    automaticPushSetupStarted.current = true;
+    startPushSetup();
+  }, [startPushSetup]);
 
   // Format live date/time: e.g. "Sep 21, 02:17 PM · Monday"
   useEffect(() => {
@@ -203,26 +212,19 @@ function DashboardPage() {
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
-  const handleEnablePush = async () => {
+  const handleDisablePush = async () => {
     setPushError("");
     setIsEnablingPush(true);
     try {
-      await enableOrderPushNotifications();
-      setPushEnabled(true);
+      await disableOrderPushNotifications();
+      setPushEnabled(false);
     } catch (error) {
-      setPushError(error.message || "Could not enable push notifications.");
+      setPushError(error.message || "Could not disable push notifications.");
     } finally {
       setIsEnablingPush(false);
     }
   };
 
-  const handleTestAlert = async () => {
-    try {
-      await sendLocalTestNotification();
-    } catch (error) {
-      alert(error.message || "Could not trigger test notification.");
-    }
-  };
 
   // Clear all orders
   const clearOrders = async () => {
@@ -437,50 +439,29 @@ function DashboardPage() {
           </div>
 
           <div className="dashboard-toolbar">
-            <button
-              type="button"
-              className="toolbar-btn outline-btn"
-              onClick={handleEnablePush}
-              disabled={isEnablingPush || !isOrderPushSupported()}
-              title={
-                pushEnabled
-                  ? "Push alerts are enabled on this device (click to re-sync)"
-                  : "Enable order alerts on this device"
-              }
-            >
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-                <path d="M10 21h4" />
-              </svg>
-              <span>
-                {pushEnabled
-                  ? "Alerts On ✓"
-                  : isEnablingPush
-                    ? "Enabling..."
-                    : isOrderPushSupported()
-                      ? "Enable Alerts"
-                      : "Push Unavailable"}
-              </span>
-            </button>
-
             {pushEnabled && (
+              <>
+                <button
+                  type="button"
+                  className="toolbar-btn outline-btn"
+                  onClick={handleDisablePush}
+                  disabled={isEnablingPush}
+                  title="Disable alerts on this device"
+                >
+                  <span>Disable Alerts</span>
+                </button>
+              </>
+            )}
+
+            {!pushEnabled && isOrderPushSupported() && (
               <button
                 type="button"
                 className="toolbar-btn outline-btn"
-                onClick={handleTestAlert}
-                title="Send a test notification to verify your device alerts"
+                onClick={startPushSetup}
+                disabled={isEnablingPush}
+                title="Retry automatic push setup"
               >
-                <span>🔔 Test Alert</span>
+                <span>{isEnablingPush ? "Setting up alerts..." : "Retry Alerts"}</span>
               </button>
             )}
 

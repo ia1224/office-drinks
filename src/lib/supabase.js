@@ -1,22 +1,20 @@
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey =
-  import.meta.env.VITE_SUPABASE_ANON_KEY ||
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 export const isSupabaseConfigured = () => {
   return Boolean(
     supabaseUrl &&
-      supabaseAnonKey &&
+      supabasePublishableKey &&
       supabaseUrl !== "https://your-project-id.supabase.co" &&
       !supabaseUrl.includes("your-project-id") &&
-      supabaseAnonKey !== "your-anon-key-here",
+      supabasePublishableKey !== "your-publishable-key-here",
   );
 };
 
 export const supabase = isSupabaseConfigured()
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabasePublishableKey)
   : null;
 
 /**
@@ -25,7 +23,7 @@ export const supabase = isSupabaseConfigured()
 export async function fetchOrders() {
   if (!isSupabaseConfigured() || !supabase) {
     throw new Error(
-      "Supabase credentials missing. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.",
+      "Supabase credentials missing. Please set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in your .env file.",
     );
   }
 
@@ -59,7 +57,7 @@ export async function fetchOrders() {
 export async function insertOrder(order) {
   if (!isSupabaseConfigured() || !supabase) {
     throw new Error(
-      "Supabase credentials missing. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.",
+      "Supabase credentials missing. Please set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in your .env file.",
     );
   }
 

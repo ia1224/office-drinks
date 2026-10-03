@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "generate-vapid": "node scripts/generate-vapid.js"
+    "generate-vapid": "node scripts/generate-vapid.js",
+    "setup-supabase-push": "node scripts/setup-supabase-push.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

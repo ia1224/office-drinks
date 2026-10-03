@@ -88,3 +88,20 @@ REVOKE ALL ON FUNCTION public.register_order_push_subscription(TEXT, TEXT, TEXT)
 FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.register_order_push_subscription(TEXT, TEXT, TEXT)
 TO anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.unregister_order_push_subscription(
+  subscription_endpoint TEXT
+)
+RETURNS VOID
+LANGUAGE SQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  DELETE FROM public.push_subscriptions
+  WHERE endpoint = subscription_endpoint;
+$$;
+
+REVOKE ALL ON FUNCTION public.unregister_order_push_subscription(TEXT)
+FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.unregister_order_push_subscription(TEXT)
+TO anon, authenticated;
