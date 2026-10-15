@@ -2,7 +2,36 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 
 /**
- * Route protection for Caretakers only (Dashboard, QR code).
+ * Route protection for Admin only (Order History, Analytics, System Admin).
+ * Caretakers are redirected to /dashboard.
+ * Employees are redirected to /order.
+ * Unauthenticated users are redirected to /login?tab=admin.
+ */
+export function AdminRoute({ children }) {
+  const { isAdmin, isCaretaker, isEmployee } = useAuth();
+  const location = useLocation();
+
+  if (!isAdmin) {
+    if (isCaretaker) {
+      return <Navigate to="/dashboard" replace />;
+    }
+    if (isEmployee) {
+      return <Navigate to="/order" replace />;
+    }
+    return (
+      <Navigate
+        to="/login?tab=admin"
+        state={{ from: location.pathname }}
+        replace
+      />
+    );
+  }
+
+  return children;
+}
+
+/**
+ * Route protection for Caretakers and Admins (Dashboard, QR code).
  * Employees are redirected to /order.
  * Unauthenticated users are redirected to /login?tab=caretaker.
  */
@@ -12,7 +41,7 @@ export function CaretakerRoute({ children }) {
 
   if (!isCaretaker) {
     if (isEmployee) {
-      // Caretaker pages are strictly for caretakers; employees are sent to order
+      // Caretaker pages are strictly for staff; employees are sent to order
       return <Navigate to="/order" replace />;
     }
     return (
@@ -29,14 +58,17 @@ export function CaretakerRoute({ children }) {
 
 /**
  * Route protection for Employees only (Order page).
- * Caretakers are redirected to /dashboard (caretakers should NOT see order page).
+ * Admins and Caretakers are redirected to their respective dashboards.
  * Unauthenticated users are redirected to /login?tab=employee.
  */
 export function EmployeeRoute({ children }) {
-  const { isEmployee, isCaretaker } = useAuth();
+  const { isEmployee, isAdmin, isCaretaker } = useAuth();
   const location = useLocation();
 
-  // Caretaker is strictly forbidden from order page per requirements
+  if (isAdmin) {
+    return <Navigate to="/admin" replace />;
+  }
+
   if (isCaretaker) {
     return <Navigate to="/dashboard" replace />;
   }

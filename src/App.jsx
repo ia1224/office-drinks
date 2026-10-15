@@ -2,10 +2,11 @@ import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthProvider";
 import { useAuth } from "./context/useAuth";
-import { CaretakerRoute, EmployeeRoute } from "./components/ProtectedRoute";
+import { AdminRoute, CaretakerRoute, EmployeeRoute } from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import OrderPage from "./pages/OrderPage";
 import DashboardPage from "./pages/DashboardPage";
+import AdminPage from "./pages/AdminPage";
 import QRPage from "./pages/QRPage";
 import LoginPage from "./pages/LoginPage";
 import "./App.css";
@@ -21,8 +22,11 @@ function ScrollToTop() {
 }
 
 function RoleBasedRedirect() {
-  const { isCaretaker, isEmployee } = useAuth();
+  const { isAdmin, isCaretaker, isEmployee } = useAuth();
 
+  if (isAdmin) {
+    return <Navigate to="/admin" replace />;
+  }
   if (isCaretaker) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -51,10 +55,20 @@ function App() {
                 }
               />
 
-              {/* Login for both employees and caretakers */}
+              {/* Login for employees, caretakers, and admins */}
               <Route path="/login" element={<LoginPage />} />
 
-              {/* Caretaker Routes: Strictly accessible to caretakers only */}
+              {/* Admin Routes: Strictly accessible to administrators only */}
+              <Route
+                path="/admin"
+                element={
+                  <AdminRoute>
+                    <AdminPage />
+                  </AdminRoute>
+                }
+              />
+
+              {/* Caretaker Routes: Strictly accessible to caretakers and admins */}
               <Route
                 path="/dashboard"
                 element={

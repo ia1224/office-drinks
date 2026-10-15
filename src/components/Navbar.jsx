@@ -3,16 +3,22 @@ import { useAuth } from "../context/useAuth";
 import "./Navbar.css";
 
 function Navbar() {
-  const { isCaretaker, isEmployee, employeeName, logout } = useAuth();
+  const { isAdmin, isCaretaker, isEmployee, employeeName, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath =
     location.pathname.toLowerCase().replace(/\/+$/, "") || "/";
 
-  const isOrderActive = currentPath === "/order";
+  const isAdminActive = currentPath === "/admin";
   const isDashboardActive = currentPath === "/dashboard";
   const isQrActive = currentPath === "/qr";
+  const isOrderActive = currentPath === "/order";
   const isLoginActive = currentPath === "/login";
+
+  const handleAdminLogout = () => {
+    logout();
+    navigate("/login?tab=admin");
+  };
 
   const handleCaretakerLogout = () => {
     logout();
@@ -25,7 +31,9 @@ function Navbar() {
   };
 
   // Determine brand link destination based on role
-  const brandDestination = isCaretaker
+  const brandDestination = isAdmin
+    ? "/admin"
+    : isCaretaker
     ? "/dashboard"
     : isEmployee
     ? "/order"
@@ -56,7 +64,9 @@ function Navbar() {
           <div className="brand-text">
             <span className="brand-title">Office Barista</span>
             <span className="brand-subtitle">
-              {isCaretaker
+              {isAdmin
+                ? "ADMIN PORTAL"
+                : isCaretaker
                 ? "CARETAKER PORTAL"
                 : isEmployee
                 ? "EMPLOYEE ORDERS"
@@ -66,8 +76,43 @@ function Navbar() {
         </Link>
 
         <div className="navbar-links">
+          {/* Admin Views: Full access to History, Live Queue, and QR */}
+          {isAdmin && (
+            <>
+              <Link
+                to="/admin"
+                className={`nav-item ${isAdminActive ? "active" : ""}`}
+              >
+                Order History
+              </Link>
+              <Link
+                to="/dashboard"
+                className={`nav-item ${isDashboardActive ? "active" : ""}`}
+              >
+                Live Queue
+              </Link>
+              <Link
+                to="/qr"
+                className={`nav-item ${isQrActive ? "active" : ""}`}
+              >
+                QR Placard
+              </Link>
+              <span className="admin-badge-pill-nav">
+                <span>👑</span> Admin
+              </span>
+              <button
+                type="button"
+                className="nav-logout-btn"
+                onClick={handleAdminLogout}
+                title="Log out from administrator session"
+              >
+                Log Out
+              </button>
+            </>
+          )}
+
           {/* Caretaker Views: Strictly only Dashboard and QR */}
-          {isCaretaker && (
+          {isCaretaker && !isAdmin && (
             <>
               <Link
                 to="/dashboard"
@@ -132,7 +177,7 @@ function Navbar() {
                     : ""
                 }`}
               >
-                Employee Sign In
+                Employee
               </Link>
               <Link
                 to="/login?tab=caretaker"
@@ -142,20 +187,17 @@ function Navbar() {
                     : ""
                 }`}
               >
-                <svg
-                  width="13"
-                  height="13"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                <span>Caretaker Portal</span>
+                <span>🍵 Caretaker</span>
+              </Link>
+              <Link
+                to="/login?tab=admin"
+                className={`nav-admin-link ${
+                  isLoginActive && location.search.includes("tab=admin")
+                    ? "active"
+                    : ""
+                }`}
+              >
+                <span>👑 Admin</span>
               </Link>
             </>
           )}

@@ -83,6 +83,12 @@
   border: 1px solid #a7f3d0;
 }
 
+.login-badge-admin {
+  background-color: #eef2ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+}
+
 /* Icon Box */
 .login-icon-box {
   width: 52px;
@@ -102,6 +108,11 @@
 
 .login-icon-caretaker {
   background: linear-gradient(135deg, #0f172a 0%, #0b3b32 100%);
+}
+
+.login-icon-admin {
+  background: linear-gradient(135deg, #312e81 0%, #4f46e5 100%);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
 }
 
 .login-title {

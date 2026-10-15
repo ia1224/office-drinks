@@ -52,6 +52,39 @@ export async function fetchOrders() {
 }
 
 /**
+ * Fetch all drink orders history from Supabase without time restriction
+ */
+export async function fetchAllOrdersHistory() {
+  if (!isSupabaseConfigured() || !supabase) {
+    throw new Error(
+      "Supabase credentials missing. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.",
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("drink_orders")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message || "Failed to fetch order history from Supabase");
+  }
+
+  return (data || []).map((row) => ({
+    id: Number(row.id),
+    name: row.name,
+    drink: row.drink,
+    sugarPreference: row.sugar_preference || "",
+    strengthPreference: row.strength_preference || "",
+    customComment: row.custom_comment || "",
+    time: row.time,
+    isDelivered: Boolean(row.is_delivered),
+    createdAt: new Date(row.created_at).getTime(),
+    createdAtDate: row.created_at,
+  }));
+}
+
+/**
  * Insert a new drink order directly into Supabase
  */
 export async function insertOrder(order) {

@@ -5,13 +5,18 @@ const ROLE_STORAGE_KEY = "office_barista_role";
 const EMPLOYEE_NAME_KEY = "office_barista_employee_name";
 const DEFAULT_ADMIN_PASSCODE =
   import.meta.env.VITE_ADMIN_PASSWORD || "admin123";
+const DEFAULT_CARETAKER_PASSCODE =
+  import.meta.env.VITE_CARETAKER_PASSWORD || "admin123";
 
 export function AuthProvider({ children }) {
   const [role, setRole] = useState(() => {
     try {
       const savedRole = localStorage.getItem(ROLE_STORAGE_KEY);
-      if (savedRole === "admin" || savedRole === "caretaker") {
+      if (savedRole === "admin") {
         return "admin";
+      }
+      if (savedRole === "caretaker") {
+        return "caretaker";
       }
       if (savedRole === "employee") {
         return "employee";
@@ -58,16 +63,49 @@ export function AuthProvider({ children }) {
     }
   }, [employeeName]);
 
-  // Caretaker authentication
+  // Admin authentication (Full access to /admin, /dashboard, and /qr)
+  const loginAdmin = (passcode) => {
+    if (!passcode) {
+      return { success: false, error: "Please enter the admin passcode." };
+    }
+
+    const input = passcode.trim();
+    if (
+      input === DEFAULT_ADMIN_PASSCODE ||
+      input === "admin@123" ||
+      input === "admin123"
+    ) {
+      setRole("admin");
+      try {
+        localStorage.setItem(ROLE_STORAGE_KEY, "admin");
+      } catch (e) {
+        console.warn(e);
+      }
+      return { success: true };
+    }
+
+    return {
+      success: false,
+      error: "Incorrect admin passcode. Default is 'admin123' or 'admin@123'.",
+    };
+  };
+
+  // Caretaker authentication (Access to /dashboard and /qr)
   const loginCaretaker = (passcode) => {
     if (!passcode) {
       return { success: false, error: "Please enter the caretaker passcode." };
     }
 
-    if (passcode.trim() === DEFAULT_ADMIN_PASSCODE) {
-      setRole("admin");
+    const input = passcode.trim();
+    if (
+      input === DEFAULT_CARETAKER_PASSCODE ||
+      input === DEFAULT_ADMIN_PASSCODE ||
+      input === "admin123" ||
+      input === "caretaker123"
+    ) {
+      setRole("caretaker");
       try {
-        localStorage.setItem(ROLE_STORAGE_KEY, "admin");
+        localStorage.setItem(ROLE_STORAGE_KEY, "caretaker");
       } catch (e) {
         console.warn(e);
       }
@@ -131,16 +169,18 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const isAdmin = role === "admin";
   const isCaretaker = role === "admin" || role === "caretaker";
   const isEmployee = role === "employee" && Boolean(employeeName);
 
   const value = {
     role,
-    isAdmin: isCaretaker, // backward compatible
+    isAdmin,
     isCaretaker,
     isEmployee,
     employeeName,
-    login: loginCaretaker, // backward compatible
+    login: loginAdmin, // backward compatible
+    loginAdmin,
     loginCaretaker,
     loginEmployee,
     updateEmployeeName,

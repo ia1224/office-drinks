@@ -5,18 +5,26 @@ import "./LoginPage.css";
 
 export default function LoginPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get("tab");
   const activeTab =
-    searchParams.get("tab") === "caretaker" ? "caretaker" : "employee";
+    rawTab === "admin"
+      ? "admin"
+      : rawTab === "caretaker"
+      ? "caretaker"
+      : "employee";
 
   const {
+    loginAdmin,
     loginCaretaker,
     loginEmployee,
+    isAdmin,
     isCaretaker,
     isEmployee,
     employeeName,
     logout,
   } = useAuth();
 
+  const [adminPasscode, setAdminPasscode] = useState("");
   const [caretakerPasscode, setCaretakerPasscode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [employeeInputName, setEmployeeInputName] = useState(employeeName || "");
@@ -28,6 +36,19 @@ export default function LoginPage() {
   const handleTabSwitch = (tab) => {
     setError("");
     setSearchParams({ tab });
+  };
+
+  const handleAdminSubmit = (e) => {
+    e.preventDefault();
+    setError("");
+
+    const result = loginAdmin(adminPasscode);
+    if (result.success) {
+      const redirectPath = location.state?.from || "/admin";
+      navigate(redirectPath, { replace: true });
+    } else {
+      setError(result.error);
+    }
   };
 
   const handleCaretakerSubmit = (e) => {
@@ -56,6 +77,71 @@ export default function LoginPage() {
     }
   };
 
+  // If already logged in as Admin
+  if (isAdmin) {
+    return (
+      <div className="login-page-wrapper">
+        <div className="login-card">
+          <div className="login-badge login-badge-admin">
+            <span>👑</span> ACTIVE ADMINISTRATOR SESSION
+          </div>
+          <div className="login-icon-box login-icon-admin">
+            <svg
+              width="26"
+              height="26"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <h1 className="login-title">Logged in as Administrator</h1>
+          <p className="login-subtitle">
+            You have full system access to view order history archives, analyze fulfillment metrics, and manage live pantry orders.
+          </p>
+
+          <div className="login-action-buttons">
+            <Link
+              to="/admin"
+              className="login-submit-btn"
+              style={{ textDecoration: "none" }}
+            >
+              Go to Order History Archive &rarr;
+            </Link>
+            <Link
+              to="/dashboard"
+              className="login-secondary-link-btn"
+              style={{ textDecoration: "none" }}
+            >
+              View Live Pantry Queue &rarr;
+            </Link>
+            <Link
+              to="/qr"
+              className="login-secondary-link-btn"
+              style={{ textDecoration: "none" }}
+            >
+              Print QR Placards &rarr;
+            </Link>
+            <button
+              type="button"
+              className="login-employee-btn"
+              onClick={() => {
+                logout();
+                handleTabSwitch("admin");
+              }}
+            >
+              Log Out of Admin Session
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // If already logged in as Caretaker
   if (isCaretaker) {
     return (
@@ -81,8 +167,7 @@ export default function LoginPage() {
           </div>
           <h1 className="login-title">Logged in as Caretaker</h1>
           <p className="login-subtitle">
-            You have administrative access to monitor live drink requests and
-            print pantry QR placards.
+            You have access to monitor live drink requests and print pantry QR placards.
           </p>
 
           <div className="login-action-buttons">
@@ -172,7 +257,7 @@ export default function LoginPage() {
                 handleTabSwitch("caretaker");
               }}
             >
-              🔐 Switch to Caretaker Login
+              🔐 Switch to Staff / Caretaker Login
             </button>
           </div>
         </div>
@@ -205,7 +290,18 @@ export default function LoginPage() {
             }`}
             onClick={() => handleTabSwitch("caretaker")}
           >
-            <span>🔐</span> Caretaker
+            <span>🍵</span> Caretaker
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "admin"}
+            className={`login-tab-btn ${
+              activeTab === "admin" ? "active-tab" : ""
+            }`}
+            onClick={() => handleTabSwitch("admin")}
+          >
+            <span>👑</span> Admin
           </button>
         </div>
 
@@ -412,6 +508,96 @@ export default function LoginPage() {
 
             <p className="login-hint-text">
               Default caretaker passcode: <code>admin123</code>
+            </p>
+          </div>
+        )}
+
+        {/* ADMIN LOGIN VIEW */}
+        {activeTab === "admin" && (
+          <div>
+            <div className="login-badge login-badge-admin">
+              OFFICE ADMINISTRATOR
+            </div>
+            <div className="login-icon-box login-icon-admin">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </div>
+
+            <h1 className="login-title">Administrator Sign In</h1>
+            <p className="login-subtitle">
+              Enter the administrator passcode to access full order history archives, delivery logs, and system metrics.
+            </p>
+
+            <form onSubmit={handleAdminSubmit} className="login-form">
+              <div className="login-form-group">
+                <label htmlFor="admin-passcode-input" className="login-label">
+                  Admin Passcode
+                </label>
+                <div className="login-input-wrapper">
+                  <svg
+                    className="login-input-icon"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  <input
+                    id="admin-passcode-input"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter admin passcode (default: admin123)"
+                    value={adminPasscode}
+                    onChange={(e) => setAdminPasscode(e.target.value)}
+                    className="login-input"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    className="login-toggle-pw"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" className="login-submit-btn">
+                <span>Unlock Admin Portal</span>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </button>
+            </form>
+
+            <p className="login-hint-text">
+              Default admin passcode: <code>admin123</code>
             </p>
           </div>
         )}
