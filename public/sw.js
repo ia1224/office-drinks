@@ -28,7 +28,8 @@ self.addEventListener("push", (event) => {
       badge: "/pwa-icon.svg",
       tag: orderId ? `drink-order-${orderId}` : `drink-order-${Date.now()}`,
       renotify: true,
-      vibrate: [200, 100, 200],
+      requireInteraction: true,
+      vibrate: [300, 150, 300],
       data: { url: payload.url || "/dashboard" },
     }),
   );

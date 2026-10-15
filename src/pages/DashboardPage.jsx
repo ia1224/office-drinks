@@ -9,37 +9,16 @@ import {
   disableOrderPushNotifications,
   enableOrderPushNotifications,
   isOrderPushSupported,
+  hasOrderPushSubscription,
 } from "../lib/pushNotifications";
+import {
+  unlockAudio,
+  playOrderChime,
+  showOrderNotification,
+} from "../utils/audioAlert";
 import "./DashboardPage.css";
 
 const DISMISSED_ORDERS_STORAGE_KEY = "office_barista_caretaker_dismissed_ids";
-
-function showSystemNotification(order) {
-  if (
-    !("Notification" in window) ||
-    Notification.permission !== "granted" ||
-    !("serviceWorker" in navigator)
-  ) {
-    return;
-  }
-
-  navigator.serviceWorker.ready
-    .then((registration) => {
-      return registration.showNotification("New drink order", {
-        body: `${order.name} ordered ${order.drink}.`,
-        icon: "/pwa-icon.svg",
-        badge: "/pwa-icon.svg",
-        tag: `drink-order-${order.id}`,
-        renotify: true,
-        vibrate: [200, 100, 200],
-        silent: false,
-        data: { url: "/dashboard" },
-      });
-    })
-    .catch((error) => {
-      console.error("System notification could not be shown:", error);
-    });
-}
 
 function DashboardPage() {
   const [orders, setOrders] = useState([]);
@@ -86,10 +65,61 @@ function DashboardPage() {
     }
   }, []);
 
+  const handleEnableAlerts = async () => {
+    unlockAudio();
+    playOrderChime();
+    setPushError("");
+    setIsEnablingPush(true);
+    try {
+      await enableOrderPushNotifications();
+      setPushEnabled(true);
+      await showOrderNotification({
+        id: Date.now(),
+        name: "Pantry Alert",
+        drink: "Sound & Notifications Active!",
+        strengthPreference: "Ready for live drink orders",
+      });
+    } catch (error) {
+      setPushEnabled(false);
+      setPushError(error.message || "Could not enable push notifications.");
+    } finally {
+      setIsEnablingPush(false);
+    }
+  };
+
+  const handleTestAlert = async () => {
+    unlockAudio();
+    playOrderChime();
+    try {
+      await showOrderNotification({
+        id: Date.now(),
+        name: "Test Order",
+        drink: "Coffee (Hot)",
+        strengthPreference: "Medium Sugar",
+        customComment: "Alert sound & pop-up test",
+      });
+    } catch (err) {
+      console.warn("Test notification failed:", err);
+    }
+  };
+
   useEffect(() => {
     if (automaticPushSetupStarted.current) return;
     automaticPushSetupStarted.current = true;
-    startPushSetup();
+
+    async function checkExistingSubscription() {
+      if (typeof window !== "undefined" && "Notification" in window) {
+        if (Notification.permission === "granted") {
+          const hasSub = await hasOrderPushSubscription();
+          if (hasSub) {
+            setPushEnabled(true);
+          } else {
+            startPushSetup();
+          }
+        }
+      }
+    }
+    checkExistingSubscription();
   }, [startPushSetup]);
 
   // Format live date/time: e.g. "Sep 21, 02:17 PM · Monday"
@@ -128,7 +158,7 @@ function DashboardPage() {
         console.log("NEW ORDER DETECTED:", newlyAddedOrders);
 
         setNewOrderIds((prev) => [...new Set([...prev, ...newIds])]);
-        newlyAddedOrders.forEach(showSystemNotification);
+        newlyAddedOrders.forEach(showOrderNotification);
 
         clearTimeout(notificationTimer.current);
         notificationTimer.current = setTimeout(() => {
@@ -178,7 +208,7 @@ function DashboardPage() {
         if (!knownOrderIds.current.has(newOrder.id)) {
           knownOrderIds.current.add(newOrder.id);
           setNewOrderIds((prev) => [...new Set([...prev, newOrder.id])]);
-          showSystemNotification(newOrder);
+          showOrderNotification(newOrder);
 
           clearTimeout(notificationTimer.current);
           notificationTimer.current = setTimeout(() => {
@@ -473,31 +503,38 @@ function DashboardPage() {
           </div>
 
           <div className="dashboard-toolbar">
-            {pushEnabled && (
-              <>
-                <button
-                  type="button"
-                  className="toolbar-btn outline-btn"
-                  onClick={handleDisablePush}
-                  disabled={isEnablingPush}
-                  title="Disable alerts on this device"
-                >
-                  <span>Disable Alerts</span>
-                </button>
-              </>
-            )}
+            {/* Test Sound & Alert Button */}
+            <button
+              type="button"
+              className="toolbar-btn outline-btn test-alert-btn"
+              onClick={handleTestAlert}
+              title="Test the chime sound and notification pop-up"
+            >
+              <span className="toolbar-btn-icon">🔊</span>
+              <span>Test Sound & Alert</span>
+            </button>
 
-            {!pushEnabled && isOrderPushSupported() && (
+            {pushEnabled ? (
               <button
                 type="button"
-                className="toolbar-btn outline-btn"
-                onClick={startPushSetup}
+                className="toolbar-btn outline-btn alerts-active-btn"
+                onClick={handleDisablePush}
                 disabled={isEnablingPush}
-                title="Retry automatic push setup"
+                title="Disable alerts on this device"
               >
-                <span>{isEnablingPush ? "Setting up alerts..." : "Retry Alerts"}</span>
+                <span>🔔 Alerts Active</span>
               </button>
-            )}
+            ) : isOrderPushSupported() ? (
+              <button
+                type="button"
+                className="toolbar-btn enable-alerts-btn"
+                onClick={handleEnableAlerts}
+                disabled={isEnablingPush}
+                title="Enable sound chime and system notifications"
+              >
+                <span>{isEnablingPush ? "Enabling..." : "🔔 Enable Sound & Alerts"}</span>
+              </button>
+            ) : null}
 
             {/* Refresh Button */}
             <button
@@ -580,6 +617,11 @@ function DashboardPage() {
               <div>
                 <strong>⚠️ Push Notification Notice:</strong>
                 <div>{pushError}</div>
+                {typeof window !== "undefined" && "Notification" in window && Notification.permission === "denied" && (
+                  <div style={{ marginTop: "6px", fontSize: "12px", color: "#7f1d1d" }}>
+                    👉 <strong>Blocked in mobile browser:</strong> Tap the lock/tune icon in your browser address bar ➔ <strong>Site Settings</strong> ➔ <strong>Notifications</strong> ➔ <strong>Allow</strong>, then tap Retry Alerts!
+                  </div>
+                )}
               </div>
               <button
                 type="button"
