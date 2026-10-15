@@ -2,8 +2,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import {
   fetchOrders,
   updateOrderDelivered,
-  deleteOrder,
-  clearAllOrders,
   subscribeToOrders,
   isSupabaseConfigured,
 } from "../lib/supabase";
@@ -13,6 +11,8 @@ import {
   isOrderPushSupported,
 } from "../lib/pushNotifications";
 import "./DashboardPage.css";
+
+const DISMISSED_ORDERS_STORAGE_KEY = "office_barista_caretaker_dismissed_ids";
 
 function showSystemNotification(order) {
   if (
@@ -43,6 +43,14 @@ function showSystemNotification(order) {
 
 function DashboardPage() {
   const [orders, setOrders] = useState([]);
+  const [dismissedOrderIds, setDismissedOrderIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem(DISMISSED_ORDERS_STORAGE_KEY);
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
   const [newOrderIds, setNewOrderIds] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDrink, setFilterDrink] = useState("All");
@@ -226,33 +234,54 @@ function DashboardPage() {
   };
 
 
-  // Clear all orders
-  const clearOrders = async () => {
+  // Helper to persist dismissed order IDs (frontend only - preserves Supabase records)
+  const updateDismissedOrderIds = useCallback((newSet) => {
+    setDismissedOrderIds(newSet);
+    try {
+      localStorage.setItem(
+        DISMISSED_ORDERS_STORAGE_KEY,
+        JSON.stringify(Array.from(newSet)),
+      );
+    } catch (err) {
+      console.warn("Failed to persist dismissed orders to localStorage:", err);
+    }
+  }, []);
+
+  // Restore/unhide all orders hidden on this device
+  const handleRestoreView = () => {
+    updateDismissedOrderIds(new Set());
+  };
+
+  // Clear orders from caretaker's view (frontend only - does NOT delete from database)
+  const clearOrders = () => {
+    const targetOrders = viewTab === "active" ? activeOrders : deliveredOrders;
+    if (targetOrders.length === 0) {
+      alert(
+        viewTab === "active"
+          ? "The active queue is already empty."
+          : "No delivered orders to clear.",
+      );
+      return;
+    }
+
     const confirmed = window.confirm(
-      "Are you sure you want to clear all orders from Supabase?",
+      `Clear ${targetOrders.length} order(s) from your screen to declutter your view?\n\n(Note: All orders remain permanently saved in the Admin database history.)`,
     );
 
     if (confirmed) {
-      try {
-        await clearAllOrders();
-        setOrders([]);
-        knownOrderIds.current = new Set();
-        setNewOrderIds([]);
-      } catch (err) {
-        alert("Failed to clear orders: " + err.message);
-      }
+      const nextSet = new Set(dismissedOrderIds);
+      targetOrders.forEach((order) => nextSet.add(order.id));
+      updateDismissedOrderIds(nextSet);
+      setNewOrderIds([]);
     }
   };
 
-  // Delete single order
-  const handleDeleteOrder = async (orderId) => {
-    try {
-      await deleteOrder(orderId);
-      setOrders((prev) => prev.filter((order) => order.id !== orderId));
-      knownOrderIds.current.delete(orderId);
-    } catch (err) {
-      alert("Failed to delete order: " + err.message);
-    }
+  // Dismiss a single order from caretaker's view (frontend only - does NOT delete from database)
+  const handleDeleteOrder = (orderId) => {
+    const nextSet = new Set(dismissedOrderIds);
+    nextSet.add(orderId);
+    updateDismissedOrderIds(nextSet);
+    setNewOrderIds((prev) => prev.filter((id) => id !== orderId));
   };
 
   // Toggle order delivered status
@@ -311,9 +340,14 @@ function DashboardPage() {
     }
   };
 
+  // Visible orders for caretaker view (filters out orders dismissed by caretaker)
+  const visibleOrders = orders.filter(
+    (order) => !dismissedOrderIds.has(order.id),
+  );
+
   // Active (pending) vs Delivered separation
-  const activeOrders = orders.filter((order) => !order.isDelivered);
-  const deliveredOrders = orders.filter((order) => order.isDelivered);
+  const activeOrders = visibleOrders.filter((order) => !order.isDelivered);
+  const deliveredOrders = visibleOrders.filter((order) => order.isDelivered);
 
   // Summary counts for caretaker preparation queue
   const totalActive = activeOrders.length;
@@ -490,12 +524,37 @@ function DashboardPage() {
               <span>Refresh</span>
             </button>
 
-            {/* Clear All Button */}
+            {/* Restore / Unhide View Button (shown if any orders are dismissed) */}
+            {dismissedOrderIds.size > 0 && (
+              <button
+                type="button"
+                className="toolbar-btn outline-btn restore-view-btn"
+                onClick={handleRestoreView}
+                title="Restore all hidden orders back onto your screen"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <span>Unhide All ({dismissedOrderIds.size})</span>
+              </button>
+            )}
+
+            {/* Clear View / Clear Queue Button */}
             <button
               type="button"
               className="toolbar-btn clear-all-btn"
               onClick={clearOrders}
-              title="Clear all orders"
+              title="Clear visible orders from this screen (preserves permanent database history)"
             >
               <svg
                 width="15"
@@ -510,7 +569,7 @@ function DashboardPage() {
                 <polyline points="3 6 5 6 21 6" />
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
               </svg>
-              <span>Clear All</span>
+              <span>{viewTab === "active" ? "Clear Queue" : "Clear Delivered"}</span>
             </button>
           </div>
         </div>
@@ -832,7 +891,7 @@ function DashboardPage() {
                         type="button"
                         className="card-delete-btn"
                         onClick={() => handleDeleteOrder(order.id)}
-                        title="Delete order"
+                        title="Dismiss from view (keeps order in Admin history)"
                       >
                         <svg
                           width="16"

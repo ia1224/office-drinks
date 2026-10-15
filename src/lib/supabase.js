@@ -1,7 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const supabasePublishableKey =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = () => {
   return Boolean(
@@ -9,7 +11,8 @@ export const isSupabaseConfigured = () => {
       supabasePublishableKey &&
       supabaseUrl !== "https://your-project-id.supabase.co" &&
       !supabaseUrl.includes("your-project-id") &&
-      supabasePublishableKey !== "your-publishable-key-here",
+      supabasePublishableKey !== "your-publishable-key-here" &&
+      supabasePublishableKey !== "your-anon-key-here",
   );
 };
 
@@ -18,7 +21,7 @@ export const supabase = isSupabaseConfigured()
   : null;
 
 /**
- * Fetch all drink orders (created within the last 6 hours) directly from Supabase
+ * Fetch drink orders (created within the last 24 hours) directly from Supabase
  */
 export async function fetchOrders() {
   if (!isSupabaseConfigured() || !supabase) {
@@ -27,11 +30,11 @@ export async function fetchOrders() {
     );
   }
 
-  const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const { data, error } = await supabase
     .from("drink_orders")
     .select("*")
-    .gte("created_at", sixHoursAgo)
+    .gte("created_at", oneDayAgo)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -147,6 +150,7 @@ export async function updateOrderDelivered(orderId, isDelivered) {
 
 /**
  * Delete a single order from Supabase
+ * NOTE: For Admin page use only. Caretaker UI dismissals are strictly frontend-only to preserve database history.
  */
 export async function deleteOrder(orderId) {
   if (!isSupabaseConfigured() || !supabase) {
@@ -166,7 +170,7 @@ export async function deleteOrder(orderId) {
 }
 
 /**
- * Clear all orders from Supabase
+ * @deprecated Caretaker clear/delete operations are frontend-only to ensure database history is never wiped.
  */
 export async function clearAllOrders() {
   if (!isSupabaseConfigured() || !supabase) {
@@ -175,11 +179,11 @@ export async function clearAllOrders() {
 
   const { error } = await supabase
     .from("drink_orders")
-    .delete()
-    .neq("id", 0);
+    .update({ is_delivered: true })
+    .eq("is_delivered", false);
 
   if (error) {
-    throw new Error(error.message || "Failed to clear orders from Supabase");
+    throw new Error(error.message || "Failed to clear active orders from Supabase");
   }
 
   return { success: true };
